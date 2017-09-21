@@ -4,6 +4,9 @@ require_once("pto.inc");
 require_once("auth.php");
 require_once("class.Debug.php");
 
+// We now are switching to use Pear::Mail
+require_once("Mail.php");
+
 //Debug::showAndDie($_REQUEST);
 
 // Validate the input format for various fields.
@@ -206,13 +209,14 @@ if (ENABLE_DB) {
 }
 
 if (ENABLE_MAIL) {
-  $mail_headers = array(
-    'From: ' . $from,
-    'Content-Type: text/plain;charset=utf-8'
-  );
-  $enc_subject = "=?utf-8?b?" . base64_encode($subject) . "?=";
-
-  $mail_result = mail(implode(", ", $notified_people), $enc_subject, $body, implode("\r\n", $mail_headers));
+      $mail_headers = array(
+          'From: ' . $from,
+          'Subject: ' . $subject,
+          'Content-Type: text/plain;charset=utf-8',
+          'To: ' . implode(", ", $notified_people)
+      );
+      $smtp = Mail::factory('smtp', $pear_mail_config);
+      $mail = $smtp->send($to, $mail_headers, $body);
 } elseif (DEBUG_ON) {
   $mail_result = FALSE;
   fb("To: ". implode(", ", $notified_people));
