@@ -58,19 +58,19 @@ if (isset($_REQUEST['id']) && $_REQUEST['id']) {
 	$manager_name = $data[0]["cn"][0];
 	$is_hr = in_array($manager_email, $hr_managers);
 
-	$c = mysql_connect(
+	$c = mysqli_connect(
 		$mysql["host"], 
 		$mysql["user"], 
 		$mysql["password"]
 	);
 	
-	mysql_select_db($mysql["database"]);
+	mysqli_select_db($c, $mysql["database"]);
 
 	$id = (int)$_REQUEST["id"];
-	$query = mysql_query("SELECT id, person, details, hours, hours_daily, start, end FROM pto WHERE id = ". $id);
+	$query = mysqli_query($c, "SELECT id, person, details, hours, hours_daily, start, end FROM pto WHERE id = ". $id);
 	$results = array();
 	
-	while ($row = mysql_fetch_assoc($query)) {
+	while ($row = mysqli_fetch_assoc($query)) {
 	  	foreach (array("id", "added", "start", "end") as $field) {
 			$row[$field] = (int)$row[$field];
 		}

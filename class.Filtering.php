@@ -79,16 +79,16 @@ class Filtering {
 	private static function _getMysqlRecords() {
 		global $mysql;
 		
-		$oConnection = mysql_connect($mysql['host'], $mysql['user'], $mysql['password']);
-		mysql_select_db($mysql['database']);
-		$oResult = mysql_query(self::_buildMysqlQuery(), $oConnection);
+		$oConnection = mysqli_connect($mysql['host'], $mysql['user'], $mysql['password']);
+		mysqli_select_db($oConnection, $mysql['database']);
+		$oResult = mysqli_query($oConnection, self::_buildMysqlQuery());
 		$aRecordSet = array();
-		while ($aRow = mysql_fetch_assoc($oResult)) {
+		while ($aRow = mysqli_fetch_assoc($oResult)) {
 			$aRecordSet[] = $aRow;
 		}
 		
-		mysql_free_result($oResult);
-		mysql_close($oConnection);
+		mysqli_free_result($oResult);
+		mysqli_close($oConnection);
 		
 		return $aRecordSet;
 	}

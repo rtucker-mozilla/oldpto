@@ -13,10 +13,9 @@ function pretty_die() {
 
 $me = $GLOBAL_AUTH_USERNAME;
 
-$conn =  @mysql_connect($mysql['host'], $mysql['user'], $mysql['password']) 
-             or pretty_die();
+$conn = @mysqli_connect($mysql['host'], $mysql['user'], $mysql['password']) or pretty_die();
 
-@mysql_select_db($mysql['database'], $conn) or pretty_die();
+@mysqli_select_db($conn, $mysql['database']) or pretty_die();
 
 $query = "select
               added,
@@ -24,21 +23,23 @@ $query = "select
               end,
               details
           from pto
-          where person = '".mysql_real_escape_string($me, $conn)."'
+          where person = '".mysqli_real_escape_string($conn, $me)."'
           order by start desc";
 
-$result = @mysql_query($query, $conn) or pretty_die();
+$result = @mysqli_query($conn, $query) or pretty_die();
 
 $mypto = array();
-while ($row = mysql_fetch_array($result, MYSQL_ASSOC)) {
-    $row['added'] = date('D, d M Y', $row['added']);
-    $row['start'] = date('D, d M Y', $row['start']);
-    $row['end'] = date('D, d M Y', $row['end']);
-    $mypto[] = $row;
+while ($row = mysqli_fetch_array($result)) {
+    $tmp = [];
+    $tmp['added'] = date('D, d M Y', $row['added']);
+    $tmp['start'] = date('D, d M Y', $row['start']);
+    $tmp['end'] = date('D, d M Y', $row['end']);
+    $tmp['details'] = $row['details'];
+    $mypto[] = $tmp;
 }
 
-mysql_free_result($result);
-mysql_close($conn);
+mysqli_free_result($result);
+mysqli_close($conn);
 
 $i = 0;
 $mypto_table_contents = '';

@@ -3,7 +3,6 @@ require_once("config.php");
 require_once("pto.inc");
 require_once("auth.php");
 require_once("class.Debug.php");
-require_once("Mail.php");
 
 function fix_notifier_name($i_from){
     # Per rfc 2822 these characters are illegal as part of the name section
@@ -90,8 +89,8 @@ $data = ldap_find(
 $manager_name = $data[0]["cn"][0];
 $is_hr = in_array($manager_email, $hr_managers);
 
-$c = mysql_connect($mysql["host"], $mysql["user"], $mysql["password"]);
-mysql_select_db($mysql["database"]);
+$c = mysqli_connect($mysql["host"], $mysql["user"], $mysql["password"]);
+mysqli_select_db($c, $mysql["database"]);
 
 if ($is_editing && !$is_hr) {
   // Can the user edit it?
@@ -102,9 +101,12 @@ if ($is_editing && !$is_hr) {
     "end >= ". (string)time() .
     ';';
 
-  $query = mysql_query($query_string);
-  $id = mysql_result($query, 0);
-  if ($id === FALSE) {
+  $query = mysqli_query($c, $query_string);
+  $id = 0;
+  while ($row = mysqli_fetch_assoc($query)) {
+    $id = (int)($row['id']);
+  }
+  if ($id === 0) {
     require_once "./templates/header.php";
     print "<form>";
     print "<p>You cannot edit this PTO entry due to one of the following:</p>";
@@ -214,9 +216,9 @@ if (ENABLE_DB) {
     $query_string =
       "INSERT INTO pto (person, details, hours, hours_daily, start, end, added) VALUES(".
       '"'. $notifier_email .'", '.
-      '"'. mysql_real_escape_string($_REQUEST["details"]) .'", '.
+      '"'. mysqli_real_escape_string($c, $_REQUEST["details"]) .'", '.
       (string)$hours .', '.
-	  '"'. mysql_real_escape_string($hours_daily) .'", '.
+	  '"'. mysqli_real_escape_string($c, $hours_daily) .'", '.
       (string)$start .', '.
       (string)$end .', '.
       (string)time() .
@@ -224,7 +226,7 @@ if (ENABLE_DB) {
     ;
  // }
 //Debug::showAndDie($query_string);
-  $query = mysql_query($query_string);
+  $query = mysqli_query($c, $query_string);
 }
 if (ENABLE_MAIL) {
   $mail_headers = array(
@@ -233,7 +235,6 @@ if (ENABLE_MAIL) {
   );
   $enc_subject = "=?utf-8?b?" . base64_encode($subject) . "?=";
   $mail_result = mail(implode(", ", $notified_people), $enc_subject, $body, implode("\r\n", $mail_headers));
-
 } elseif (DEBUG_ON) {
   $mail_result = FALSE;
   fb("To: ". implode(", ", $notified_people));
@@ -260,7 +261,7 @@ require_once "./templates/header.php";
       if (!$query && DEBUG_ON) {
         fb("is_editing?");
         fb($is_editing);
-        fb(mysql_errno() .": ". mysql_error());
+        fb(mysqli_errno() .": ". mysqli_error());
         fb($query_string);
       }
     ?>
